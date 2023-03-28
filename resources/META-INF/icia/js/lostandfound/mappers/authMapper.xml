@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icia.js.lostandfound.mapper.AuthMapperInter">
+    <insert id="insMemberInfo" parameterType="icia.js.lostandfound.beans.MemberBean">
+		INSERT INTO LFDBA.MEMBERS(MM_ID, MM_NAME, MM_EMAIL, MM_PHONE, MM_SNS) VALUES(#{mmId}, #{mmName}, #{mmEmail}, #{mmPhone}, #{mmSns})
+	</insert>
+	<select id="getMemberInfoCnt" parameterType="icia.js.lostandfound.beans.MemberBean" resultType="int">
+		SELECT COUNT(MM_ID)
+		FROM LFDBA.MEMBERS WHERE MM_ID= #{mmId}
+	</select>
+	<select id="getMemberIsReturning" parameterType="icia.js.lostandfound.beans.MemberBean" resultType="int">
+		SELECT COUNT(MM_ID)
+		FROM LFDBA.MEMBERS WHERE MM_ID= #{mmId} AND MM_DATE >= SYSDATE - 7
+	</select>
+	<select id="getMemberInfo" parameterType="icia.js.lostandfound.beans.MemberBean" resultType="icia.js.lostandfound.beans.MemberBean">
+		SELECT MM_ID AS MMID,MM_NAME AS MMNAME,MM_EMAIL AS MMEMAIL,MM_PHONE AS MMPHONE,MM_SNS AS MMSNS,MM_LIMIT AS MMLIMIT,MM_DATE AS MMDATE
+		FROM LFDBA.MEMBERS WHERE MM_ID=#{mmId}
+	</select>
+	<insert id="insAccessLog" parameterType="icia.js.lostandfound.beans.MemberBean"
+	useGeneratedKeys="true" keyProperty="acList[0].acId" keyColumn="AC_ID">
+		INSERT INTO LFDBA.ACCESSLOG(AC_ID, AC_USERID, AC_PRIVATEIP, AC_TYPE, AC_DATE,AC_BROSWER) 
+		VALUES(LFDBA.ACCESSLOGSEQ.NEXTVAL, #{acList[0].acUserId}, #{acList[0].acPrivateIp}, 
+		#{acList[0].acType},DEFAULT, #{acList[0].acBroswer})
+	</insert>
+	<insert id="insVisitLog" parameterType="icia.js.lostandfound.beans.PageVisitBean">
+		INSERT INTO LFDBA.PAGEVISITS(PV_VISITDATE, PV_ACID, PV_PAGEID) 
+		VALUES(DEFAULT, #{pvAcId}, (SELECT PG_ID FROM LFDBA.PAGES WHERE PG_NAME=#{pvPageName}))
+	</insert>
+</mapper>

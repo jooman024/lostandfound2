@@ -1,0 +1,979 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icia.js.lostandfound.mapper.userMapperInter">
+	<delete id="delImgLostTemp" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.IMAGEINFOTEMP WHERE II_ID=#{lalist[0].laMmId}
+	</delete>
+	<delete id="delImgFoundTemp" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.IMAGEINFOTEMP WHERE II_ID=#{falist[0].faMmId}
+	</delete>
+	<select id="userLostBeforeSelect" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="icia.js.lostandfound.beans.LostArticleImages">
+		SELECT II_IMGNAME AS LINAME, II_CATE AS LICATE, II_COLORCATE AS LICOLORCATE
+		FROM LFDBA.IMAGEINFOTEMP WHERE II_DATE = (SELECT MAX(II_DATE) FROM LFDBA.IMAGEINFOTEMP) AND II_ID=#{lalist[0].laMmId}
+	</select>
+	<select id="userFoundBeforeSelect" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="icia.js.lostandfound.beans.FoundArticleImages">
+		SELECT II_IMGNAME AS FINAME, II_CATE AS FICATE, II_COLORCATE AS FICOLORCATE
+		FROM LFDBA.IMAGEINFOTEMP WHERE II_DATE = (SELECT MAX(II_DATE) FROM LFDBA.IMAGEINFOTEMP) AND II_ID=#{falist[0].faMmId}
+	</select>
+	<insert id="userLostBefore" parameterType="icia.js.lostandfound.beans.ItemsBean">
+		INSERT INTO LFDBA.IMAGEINFOTEMP
+		(II_IMGNAME,II_CATE,II_COLORCATE,II_DATE,II_ID) 
+		VALUES(#{lalist[0].laImgList[0].liName},#{lalist[0].laImgList[0].liCate},#{lalist[0].laImgList[0].liColorCate},DEFAULT,#{lalist[0].laMmId})
+	</insert>
+	<insert id="userFoundBefore" parameterType="icia.js.lostandfound.beans.ItemsBean">
+		INSERT INTO LFDBA.IMAGEINFOTEMP
+		(II_IMGNAME,II_CATE,II_COLORCATE,II_DATE,II_ID) 
+		VALUES(#{falist[0].faImgList[0].fiName},#{falist[0].faImgList[0].fiCate},#{falist[0].faImgList[0].fiColorCate},DEFAULT,#{falist[0].faMmId})
+	</insert>
+	<select id="getMgrsCate" parameterType="icia.js.lostandfound.beans.MainCategoryBean" resultType="icia.js.lostandfound.beans.SubCategoryBean">
+		SELECT UC_MCCODE AS UCMCCODE, UC_CODE AS UCCODE, UC_NAME AS UCNAME FROM LFDBA.SUBCATEGORIES 
+		WHERE 
+		(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=3 AND UC_CODE LIKE 'BA%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=4 AND UC_CODE LIKE 'OR%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=5 AND UC_CODE LIKE 'BO%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=1 AND UC_CODE LIKE 'DO%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=1 AND UC_CODE LIKE 'IY%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=1 AND UC_CODE LIKE 'SH%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=1 AND UC_CODE LIKE 'SP%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=6 AND UC_CODE LIKE 'CL%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=4 AND UC_CODE LIKE 'CA%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=6 AND UC_CODE LIKE 'EL%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=3 AND UC_CODE LIKE 'WA%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=3 AND UC_CODE LIKE 'CO%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=3 AND UC_CODE LIKE 'CR%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=3 AND UC_CODE LIKE 'CS%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=5 AND UC_CODE LIKE 'SM%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=6 AND UC_CODE LIKE 'ET%')
+		OR(TO_NUMBER(SUBSTR(UC_CODE,3,3))>=1 AND UC_CODE LIKE 'LE%')
+	</select>
+	<delete id="delAlarmRow" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.MATCHINGALARM WHERE MA_LACTNUMBER = #{mInfo.alarm[0].maLaCtNumber} AND MA_FACTNUMBER = #{mInfo.alarm[0].maFaCtNumber}
+	</delete>
+	<resultMap id="getAlarmListFoundMap" type="icia.js.lostandfound.beans.FoundArticleBean">
+		<id property="faCtNumber" column="FACTNUMBER"/>
+		<result property="faMmId" column="FAMMID" />
+		<association property="member" column="FAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getFoundMember"/>
+		<collection property="faImgList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundArticleImages" select="getMyCommentFoundImgList"/>
+		<collection property="faCommentList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundCommentsBean" select="getMyCommentFoundCollection"/>
+	</resultMap>
+	<select id="getAlarmListFound" parameterType="string" resultMap="getAlarmListFoundMap">
+		SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+		(
+			SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+			        FROM LFDBA.FOUNDARTICLEJAN
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			UNION
+			SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+			        FROM LFDBA.FOUNDARTICLEFEB
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			UNION
+			SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+			        FROM LFDBA.FOUNDARTICLEMAR
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			UNION
+			SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+			        FROM LFDBA.FOUNDARTICLEOCT
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			UNION
+			SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+			        FROM LFDBA.FOUNDARTICLENOV
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			UNION
+			SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+			        FROM LFDBA.FOUNDARTICLEDES
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+	   ) WHERE FACTNUMBER=#{maFaCtNumber}
+	</select>
+	<resultMap id="getAlarmListMap" type="icia.js.lostandfound.beans.MatchingAlarmBean">
+		<id property="maFaCtNumber" column="MAFACTNUMBER"/>
+		<association property="found" column="MAFACTNUMBER" javaType="icia.js.lostandfound.beans.FoundArticleBean" select="getAlarmListFound"/>
+	</resultMap>
+	<select id="getAlarmList" parameterType="icia.js.lostandfound.beans.MemberBean" resultMap="getAlarmListMap">
+		SELECT MA_MMID AS MAMMID , MA_FACTNUMBER AS MAFACTNUMBER , MA_DATE AS MADATE , MA_FANAME AS MAFANAME, MA_LANAME AS MALANAME, MA_LACTNUMBER AS MALACTNUMBER
+		FROM LFDBA.MATCHINGALARM WHERE MA_MMID=#{mmId}
+	</select>
+	<update id="modMyFound" parameterType="icia.js.lostandfound.beans.ItemsBean">
+		UPDATE LFDBA.FOUNDARTICLE${monthList[0].month} SET 
+    		FA_NAME = #{falist[0].faName},FA_DEPPLACE = #{falist[0].faDepPlace},FA_PLACE = #{falist[0].faPlace},FA_HOUR=#{falist[0].faHour},FA_UNIQUE=#{falist[0].faUnique}  
+			WHERE FA_CTNUMBER = #{falist[0].faCtNumber}
+	</update>
+	<update id="modMyLost" parameterType="icia.js.lostandfound.beans.ItemsBean">
+		UPDATE LFDBA.LOSTARTICLE${monthList[0].month} SET 
+    		LA_NAME = #{lalist[0].laName},LA_LOCATION = #{lalist[0].laLocation},LA_PLACE = #{lalist[0].laPlace},LA_HOUR=#{lalist[0].laHour},LA_UNIQUE=#{lalist[0].laUnique}  
+			WHERE LA_CTNUMBER = #{lalist[0].laCtNumber}
+	</update>
+	<delete id="delMyCommentFound" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.FOUNDCOMMENTS WHERE FCO_CODE = #{temp} AND FCO_DATE = TO_DATE(#{temp2},'YYYY-MM-DD HH24:MI:SS')
+	</delete>
+	<delete id="delMyCommentLost" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.LOSTCOMMENTS WHERE LCO_CODE = #{temp} AND LCO_DATE = TO_DATE(#{temp2},'YYYY-MM-DD HH24:MI:SS')
+	</delete>
+	<delete id="delMyFound" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.FOUNDARTICLE${monthList[0].month} WHERE FA_CTNUMBER = #{temp}
+	</delete>
+	<delete id="delMyFoundImg" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.FOUNDARTICLEIMAGES WHERE FI_FACODE = #{temp}
+	</delete>
+	<delete id="delMyFoundComments" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.FOUNDCOMMENTS WHERE FCO_CODE = #{temp}
+	</delete>
+	<delete id="delMyLost" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.LOSTARTICLE${monthList[0].month} WHERE LA_CTNUMBER = #{temp}
+	</delete>
+	<delete id="delMyLostImg" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.LOSTARTICLEIMAGES WHERE LI_LACODE = #{temp}
+	</delete>
+	<delete id="delMyLostComments" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.LOSTCOMMENTS WHERE LCO_CODE = #{temp}
+	</delete>
+	<update id="modUserInfo" parameterType="icia.js.lostandfound.beans.ItemsBean">
+		UPDATE LFDBA.MEMBERS SET 
+    		MM_PHONE = #{temp} 
+			WHERE MM_ID = #{member.mmId}
+	</update>
+	<update id="modUserName" parameterType="icia.js.lostandfound.beans.ItemsBean">
+		UPDATE LFDBA.MEMBERS SET 
+    		MM_NAME = #{temp} 
+			WHERE MM_ID = #{member.mmId}
+	</update>
+	<select id="getMyCommentFoundCollection" parameterType="string" resultType="icia.js.lostandfound.beans.FoundCommentsBean">
+		SELECT FCO_CODE AS FCOCODE , FCO_MMID AS FCOMMID , FCO_DATE AS FCODATE, FCO_COMMENT AS FCOCOMMENT, MM_NAME AS FCOMMNAME
+		FROM LFDBA.FOUNDCOMMENTS 
+		INNER JOIN LFDBA.MEMBERS ON MM_ID=FCO_MMID
+		WHERE FCO_CODE=#{faCtNumber}
+		ORDER BY FCO_DATE
+	</select>
+	<select id="getMyCommentFoundImgList" parameterType="string" resultType="icia.js.lostandfound.beans.FoundArticleImages">
+		SELECT FI_IMGCODE AS FIIMGCODE,FI_FACODE AS FIFACODE, FI_NAME AS FINAME , FI_LOC AS FILOC, FI_CATE AS FICATE, FI_COLORCATE AS FICOLORCATE FROM 
+		LFDBA.FOUNDARTICLEIMAGES WHERE FI_FACODE=#{faCtNumber}
+	</select>
+	<resultMap id="getMyCommentFoundMap" type="icia.js.lostandfound.beans.FoundArticleBean">
+		<id property="faCtNumber" column="FACTNUMBER"/>
+		<result property="faMmId" column="FAMMID" />
+		<association property="member" column="FAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getFoundMember"/>
+		<collection property="faImgList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundArticleImages" select="getMyCommentFoundImgList"/>
+		<collection property="faCommentList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundCommentsBean" select="getMyCommentFoundCollection"/>
+	</resultMap>
+	<select id="getMyCommentFound" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getMyCommentFoundMap">
+		SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+		(
+			<foreach collection="monthList" item="record"
+							separator="UNION">
+			SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+			        FROM LFDBA.FOUNDARTICLE${record.month}
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			        INNER JOIN LFDBA.FOUNDCOMMENTS ON FCO_CODE=FA_CTNUMBER 
+			        WHERE FCO_MMID=#{member.mmId}
+	         </foreach>
+	   )
+	</select>
+	<select id="getMyCommentLostCollection" parameterType="string" resultType="icia.js.lostandfound.beans.LostCommentsBean">
+		SELECT LCO_CODE AS LCOCODE , LCO_MMID AS LCOMMID , LCO_DATE AS LCODATE, LCO_COMMENT AS LCOCOMMENT, MM_NAME AS LCOMMNAME
+		FROM LFDBA.LOSTCOMMENTS 
+		INNER JOIN LFDBA.MEMBERS ON MM_ID=LCO_MMID
+		WHERE LCO_CODE=#{laCtNumber}
+		ORDER BY LCO_DATE
+	</select>
+	<select id="getMyCommentLostImgData" parameterType="string" resultType="icia.js.lostandfound.beans.LostArticleImages">
+		SELECT LI_IMGCODE AS LIIMGCODE,LI_LACODE AS LILACODE, LI_NAME AS LINAME , LI_LOC AS LILOC, LI_CATE AS LICATE, LI_COLORCATE AS LICOLORCATE FROM 
+		LFDBA.LOSTARTICLEIMAGES WHERE LI_LACODE=#{laCtNumber}
+	</select>
+	<resultMap id="getMyCommentLostMap" type="icia.js.lostandfound.beans.LostArticleBean">
+		<id property="laCtNumber" column="LACTNUMBER"/>
+		<result property="laMmId" column="LAMMID" />
+		<association property="member" column="LAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getLostMember"/>
+		<collection property="laImgList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostArticleImages" select="getMyCommentLostImgData"/>
+		<collection property="laCommentList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostCommentsBean" select="getMyCommentLostCollection"/>
+	</resultMap>
+	<select id="getMyCommentLost" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getMyCommentLostMap">
+		SELECT LAMCCODE,LAUCCODE,LACTNUMBER,LANAME,LAPLACE,LADATE,LAMMID,LASTATUS,LAUNIQUE,LAHOUR,LALOCATION FROM 
+		(
+			<foreach collection="monthList" item="record"
+							separator="UNION">
+			 SELECT LA_MCCODE AS MCCODE,MC_NAME AS LAMCCODE,LA_UCCODE AS UCCODE,UC_NAME AS LAUCCODE, LA_CTNUMBER AS
+							LACTNUMBER, LA_NAME AS LANAME, LA_PLACE AS LAPLACE, LA_DATE AS LADATE,
+							LA_MMID AS LAMMID, CA_NAME AS LASTATUS, LA_UNIQUE AS LAUNIQUE,
+							LA_HOUR AS LAHOUR,LA_LOCATION AS LOCATION, LO_NAME AS LALOCATION
+							FROM LFDBA.LOSTARTICLE${record.month}
+							INNER JOIN LFDBA.LOCATION ON LO_CODE=LA_LOCATION                
+				            INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= LA_MCCODE
+				            INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= LA_UCCODE AND UC_MCCODE=LA_MCCODE
+				            INNER JOIN LFDBA.CATEGORIES ON CA_CODE=LA_STATUS
+				            INNER JOIN LFDBA.LOSTCOMMENTS ON LCO_CODE=LA_CTNUMBER
+                            WHERE LCO_MMID=#{member.mmId}
+	         </foreach>
+	   )
+	</select>
+	<select id="getMyFoundImgList" parameterType="string" resultType="icia.js.lostandfound.beans.FoundArticleImages">
+		SELECT FI_IMGCODE AS FIIMGCODE,FI_FACODE AS FIFACODE, FI_NAME AS FINAME , FI_LOC AS FILOC, FI_CATE AS FICATE, FI_COLORCATE AS FICOLORCATE FROM 
+		LFDBA.FOUNDARTICLEIMAGES WHERE FI_FACODE=#{faCtNumber}
+	</select>
+	<resultMap id="getMyFoundMap" type="icia.js.lostandfound.beans.FoundArticleBean">
+		<id property="faCtNumber" column="FACTNUMBER"/>
+		<result property="faMmId" column="FAMMID" />
+		<association property="member" column="FAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getFoundMember"/>
+		<collection property="faImgList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundArticleImages" select="getMyFoundImgList"/>
+		<collection property="faCommentList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundCommentsBean" select="getMyCommentFoundCollection"/>
+	</resultMap>
+	<select id="getMyFound" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getMyFoundMap">
+		SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+		(
+			<foreach collection="monthList" item="record"
+							separator="UNION">
+			SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+			        FROM LFDBA.FOUNDARTICLE${record.month}
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+	         </foreach>
+	   )
+       WHERE FAMMID = #{member.mmId}
+	</select>
+	<select id="getMyLostImgData" parameterType="string" resultType="icia.js.lostandfound.beans.LostArticleImages">
+		SELECT LI_IMGCODE AS LIIMGCODE,LI_LACODE AS LILACODE, LI_NAME AS LINAME , LI_LOC AS LILOC, LI_CATE AS LICATE, LI_COLORCATE AS LICOLORCATE FROM 
+		LFDBA.LOSTARTICLEIMAGES WHERE LI_LACODE=#{laCtNumber}
+	</select>
+	<resultMap id="getMyLostMap" type="icia.js.lostandfound.beans.LostArticleBean">
+		<id property="laCtNumber" column="LACTNUMBER"/>
+		<result property="laMmId" column="LAMMID" />
+		<association property="member" column="LAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getLostMember"/>
+		<collection property="laImgList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostArticleImages" select="getMyLostImgData"/>
+		<collection property="laCommentList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostCommentsBean" select="getMyCommentLostCollection"/>
+	</resultMap>
+	<select id="getMyLost" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getMyLostMap">
+		SELECT LAMCCODE,LAUCCODE,LACTNUMBER,LANAME,LAPLACE,LADATE,LAMMID,LASTATUS,LAUNIQUE,LAHOUR,LALOCATION FROM 
+		(
+			<foreach collection="monthList" item="record"
+							separator="UNION">
+			SELECT LA_MCCODE AS MCCODE,MC_NAME AS LAMCCODE,LA_UCCODE AS UCCODE,UC_NAME AS LAUCCODE, LA_CTNUMBER AS
+							LACTNUMBER, LA_NAME AS LANAME, LA_PLACE AS LAPLACE, LA_DATE AS LADATE,
+							LA_MMID AS LAMMID, CA_NAME AS LASTATUS, LA_UNIQUE AS LAUNIQUE,
+							LA_HOUR AS LAHOUR,LA_LOCATION AS LOCATION, LO_NAME AS LALOCATION
+							FROM LFDBA.LOSTARTICLE${record.month}
+							INNER JOIN LFDBA.LOCATION ON LO_CODE=LA_LOCATION                
+				            INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= LA_MCCODE
+				            INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= LA_UCCODE AND UC_MCCODE=LA_MCCODE
+				            INNER JOIN LFDBA.CATEGORIES ON CA_CODE=LA_STATUS
+	         </foreach>
+	   )
+       WHERE LAMMID = #{member.mmId}
+	</select>
+	<select id="getBannerImgData" parameterType="string" resultType="icia.js.lostandfound.beans.FoundArticleImages">
+		SELECT FI_IMGCODE AS FIIMGCODE,FI_FACODE AS FIFACODE, FI_NAME AS FINAME , FI_LOC AS FILOC, FI_CATE AS FICATE, FI_COLORCATE AS FICOLORCATE FROM 
+		LFDBA.FOUNDARTICLEIMAGES WHERE FI_FACODE=#{faCtNumber}
+	</select>
+	<resultMap id="getBannerDataMap" type="icia.js.lostandfound.beans.FoundArticleBean">
+		<id property="faCtNumber" column="FACTNUMBER"/>
+		<result property="faMmId" column="FAMMID" />
+		<association property="member" column="FAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getFoundMember"/>
+		<collection property="faImgList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundArticleImages" select="getBannerImgData"/>
+		<collection property="faCommentList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundCommentsBean" select="getMyCommentFoundCollection"/>
+	</resultMap>
+	<select id="getBannerData" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getBannerDataMap">
+		SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+		    	(
+    SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+		    	(
+				<foreach collection="monthList" item="record"
+						separator="UNION">
+				 SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+        FROM LFDBA.FOUNDARTICLE${record.month}
+        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+        INNER JOIN FOUNDARTICLEIMAGES ON FOUNDARTICLEIMAGES.FI_FACODE=FOUNDARTICLE${record.month}.FA_CTNUMBER
+				</foreach>
+			)
+    ORDER BY DBMS_RANDOM.VALUE
+)
+WHERE ROWNUM &lt;= 40
+	</select>
+	<select id="getTotalLostImgSearchNum" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="int">
+		SELECT COUNT(LACTNUMBER) FROM  
+		(
+				SELECT DISTINCT LAMCCODE,LAUCCODE,LACTNUMBER,LANAME,LAPLACE,LADATE,LAMMID,LASTATUS,LAUNIQUE,LAHOUR,LALOCATION FROM 
+		    	(
+					<foreach collection="monthList" item="record"
+						separator="UNION">
+			            SELECT LA_MCCODE AS MCCODE,MC_NAME AS LAMCCODE,LA_UCCODE AS UCCODE,UC_NAME AS LAUCCODE, LA_CTNUMBER AS
+						LACTNUMBER, LA_NAME AS LANAME, LA_PLACE AS LAPLACE, LA_DATE AS LADATE,
+						LA_MMID AS LAMMID, CA_NAME AS LASTATUS, LA_UNIQUE AS LAUNIQUE,
+						LA_HOUR AS LAHOUR,LA_LOCATION AS LOCATION, LO_NAME AS LALOCATION, LI_COLORCATE AS LICOLORCATE,LI_CATE AS LICATE
+						FROM LFDBA.LOSTARTICLE${record.month}
+						INNER JOIN LFDBA.LOCATION ON LO_CODE=LA_LOCATION                
+			            INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= LA_MCCODE
+			            INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= LA_UCCODE AND UC_MCCODE=LA_MCCODE
+			            INNER JOIN LFDBA.CATEGORIES ON CA_CODE=LA_STATUS 
+			            LEFT JOIN LOSTARTICLEIMAGES ON LA_CTNUMBER = LI_LACODE
+					</foreach>
+				) l
+				JOIN TABLE(matches(l.LICATE||l.LANAME||l.LAPLACE, 
+				keyword_type(<foreach collection="isInfo.keyword" item="record" separator=",">#{record}</foreach>))) a
+				ON 1=1
+				WHERE CASE WHEN l.LICOLORCATE IS NULL THEN 1
+                WHEN l.LICOLORCATE IS NOT NULL AND (SELECT similarity_distance(#{isInfo.imageColorCate},l.LICOLORCATE) AS CNT FROM DUAL) &gt;= 1 THEN 1
+                ELSE 0 END=1
+		)
+	</select>
+	<select id="lostImgSearchImgList" parameterType="string" resultType="icia.js.lostandfound.beans.LostArticleImages">
+		SELECT LI_IMGCODE AS LIIMGCODE,LI_LACODE AS LILACODE, LI_NAME AS LINAME , LI_LOC AS LILOC, LI_CATE AS LICATE, LI_COLORCATE AS LICOLORCATE FROM 
+		LFDBA.LOSTARTICLEIMAGES WHERE LI_LACODE=#{laCtNumber}
+	</select>
+	<resultMap id="lostImgSearchList" type="icia.js.lostandfound.beans.LostArticleBean">
+		<id property="laCtNumber" column="LACTNUMBER"/>
+		<result property="laMmId" column="LAMMID" />
+		<association property="member" column="LAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getLostMember"/>
+		<collection property="laImgList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostArticleImages" select="lostImgSearchImgList"/>
+		<collection property="laCommentList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostCommentsBean" select="getMyCommentLostCollection"/>
+	</resultMap>
+	<select id="ImageSearchL" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="lostImgSearchList">
+	SELECT LAMCCODE, LAUCCODE, LACTNUMBER, LANAME, LAPLACE, LADATE, LAMMID, LASTATUS, LAUNIQUE, LAHOUR, LALOCATION FROM 
+  		(
+    		SELECT LAMCCODE, LAUCCODE, LACTNUMBER, LANAME, LAPLACE, LADATE, LAMMID, LASTATUS, LAUNIQUE, LAHOUR, LALOCATION, ROWNUM AS SEQ FROM  
+		    (
+		    	SELECT DISTINCT LAMCCODE,LAUCCODE,LACTNUMBER,LANAME,LAPLACE,LADATE,LAMMID,LASTATUS,LAUNIQUE,LAHOUR,LALOCATION FROM 
+		    	(
+					<foreach collection="monthList" item="record"
+						separator="UNION">
+			            SELECT LA_MCCODE AS MCCODE,MC_NAME AS LAMCCODE,LA_UCCODE AS UCCODE,UC_NAME AS LAUCCODE, LA_CTNUMBER AS
+						LACTNUMBER, LA_NAME AS LANAME, LA_PLACE AS LAPLACE, LA_DATE AS LADATE,
+						LA_MMID AS LAMMID, CA_NAME AS LASTATUS, LA_UNIQUE AS LAUNIQUE,
+						LA_HOUR AS LAHOUR,LA_LOCATION AS LOCATION, LO_NAME AS LALOCATION, LI_COLORCATE AS LICOLORCATE,LI_CATE AS LICATE
+						FROM LFDBA.LOSTARTICLE${record.month}
+						INNER JOIN LFDBA.LOCATION ON LO_CODE=LA_LOCATION                
+			            INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= LA_MCCODE
+			            INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= LA_UCCODE AND UC_MCCODE=LA_MCCODE
+			            INNER JOIN LFDBA.CATEGORIES ON CA_CODE=LA_STATUS 
+			            LEFT JOIN LOSTARTICLEIMAGES ON LA_CTNUMBER = LI_LACODE
+					</foreach>
+				) l
+				JOIN TABLE(matches(l.LICATE||l.LANAME||l.LAPLACE, 
+				keyword_type(<foreach collection="isInfo.keyword" item="record" separator=",">#{record}</foreach>))) a
+				ON 1=1
+				WHERE CASE WHEN l.LICOLORCATE IS NULL THEN 1
+                WHEN l.LICOLORCATE IS NOT NULL AND (SELECT similarity_distance(#{isInfo.imageColorCate},l.LICOLORCATE) AS CNT FROM DUAL) &gt;= 1 THEN 1
+                ELSE 0 END=1 
+				ORDER BY <if test="sortInfo.sortNum==1">
+					LADATE
+					</if>
+					<if test="sortInfo.sortNum==2">
+						LANAME
+					</if>
+					<if test="sortInfo.sortNum==3">
+						LAPLACE
+					</if>
+					<if test="sortInfo.asc">
+						ASC
+					</if>
+					<if test="!sortInfo.asc">
+						DESC
+					</if>	
+			)
+		)WHERE SEQ &lt;(#{startIdx} + #{rowNum}) AND SEQ &gt;=#{startIdx}
+	</select>
+	<select id="getTotalFoundImgSearchNum" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="int">
+		SELECT COUNT(FACTNUMBER) FROM  
+		(
+				SELECT DISTINCT FAMCCODE,FAUCCODE,FACTNUMBER,FANAME,FAPLACE,FADATE,FAMMID,FASTATUS,FAUNIQUE,FAHOUR,FACOLOR,FADEPPLACE
+				FROM
+				(		
+					<foreach collection="monthList" item="record"
+						separator="UNION">
+						SELECT FA_MCCODE AS MCCODE,MC_NAME AS FAMCCODE, FA_UCCODE AS UCCODE,UC_NAME AS FAUCCODE, FA_CTNUMBER AS
+						FACTNUMBER, FA_NAME AS FANAME, FA_PLACE AS FAPLACE, FA_DATE AS FADATE,
+						FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE,
+						FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, FA_DEPPLACE AS FADEPPLACE , FI_COLORCATE AS FICOLORCATE,FI_CATE AS FICATE
+						FROM LFDBA.FOUNDARTICLE${record.month}
+						INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			            INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			            INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			            INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			            LEFT JOIN FOUNDARTICLEIMAGES ON FA_CTNUMBER = FI_FACODE
+					</foreach>
+				) f JOIN TABLE(matches(f.FICATE||f.FAUNIQUE, 
+				keyword_type(<foreach collection="isInfo.keyword" item="record" separator=",">#{record}</foreach>))) a
+				ON 1=1
+				WHERE CASE WHEN f.FICOLORCATE IS NULL THEN 1
+                WHEN f.FICOLORCATE IS NOT NULL AND (SELECT similarity_distance(#{isInfo.imageColorCate},f.FICOLORCATE) AS CNT FROM DUAL) &gt;= 1 THEN 1
+                ELSE 0 END=1
+		)
+	</select>
+	<select id="foundImgSearchImgList" parameterType="string" resultType="icia.js.lostandfound.beans.FoundArticleImages">
+		SELECT FI_IMGCODE AS FIIMGCODE,FI_FACODE AS FIFACODE, FI_NAME AS FINAME , FI_LOC AS FILOC, FI_CATE AS FICATE, FI_COLORCATE AS FICOLORCATE FROM 
+		LFDBA.FOUNDARTICLEIMAGES WHERE FI_FACODE=#{faCtNumber}
+	</select>
+	<resultMap id="foundImgSearchList" type="icia.js.lostandfound.beans.FoundArticleBean">
+		<id property="faCtNumber" column="FACTNUMBER"/>
+		<result property="faMmId" column="FAMMID" />
+		<association property="member" column="FAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getFoundMember"/>
+		<collection property="faImgList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundArticleImages" select="foundImgSearchImgList"/>
+		<collection property="faCommentList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundCommentsBean" select="getMyCommentFoundCollection"/>
+	</resultMap>
+	<select id="ImageSearchF" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="foundImgSearchList">
+	SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+  		(
+    		SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE, ROWNUM AS SEQ FROM  
+		    (
+				SELECT DISTINCT FAMCCODE,FAUCCODE,FACTNUMBER,FANAME,FAPLACE,FADATE,FAMMID,FASTATUS,FAUNIQUE,FAHOUR,FACOLOR,FADEPPLACE
+				FROM
+				(		
+					<foreach collection="monthList" item="record"
+						separator="UNION">
+						SELECT FA_MCCODE AS MCCODE,MC_NAME AS FAMCCODE, FA_UCCODE AS UCCODE,UC_NAME AS FAUCCODE, FA_CTNUMBER AS
+						FACTNUMBER, FA_NAME AS FANAME, FA_PLACE AS FAPLACE, FA_DATE AS FADATE,
+						FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE,
+						FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, FA_DEPPLACE AS FADEPPLACE , FI_COLORCATE AS FICOLORCATE,FI_CATE AS FICATE
+						FROM LFDBA.FOUNDARTICLE${record.month}
+						INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			            INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			            INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			            INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			            LEFT JOIN FOUNDARTICLEIMAGES ON FA_CTNUMBER = FI_FACODE
+					</foreach>
+				) f JOIN TABLE(matches(f.FICATE||f.FAUNIQUE, 
+				keyword_type(<foreach collection="isInfo.keyword" item="record" separator=",">#{record}</foreach>))) a
+				ON 1=1
+				WHERE CASE WHEN f.FICOLORCATE IS NULL THEN 1
+                WHEN f.FICOLORCATE IS NOT NULL AND (SELECT similarity_distance(#{isInfo.imageColorCate},f.FICOLORCATE) AS CNT FROM DUAL) &gt;= 1 THEN 1
+                ELSE 0 END=1 
+				ORDER BY <if test="sortInfo.sortNum==1">FADATE</if>
+					<if test="sortInfo.sortNum==2">
+						FANAME
+					</if>
+					<if test="sortInfo.sortNum==3">
+						FAPLACE
+					</if>
+					<if test="sortInfo.sortNum==4">
+						FADEPPLACE
+					</if>
+					<if test="sortInfo.asc">
+						ASC
+					</if>
+					<if test="!sortInfo.asc">
+						DESC
+					</if>
+			)
+		)WHERE SEQ &lt;(#{startIdx} + #{rowNum}) AND SEQ &gt;=#{startIdx}
+	</select>
+	<insert id="ALERTMSG" parameterType="icia.js.lostandfound.beans.MatchingBean">
+		INSERT ALL
+		<foreach collection="alarm" item="record" separator=" ">
+			INTO LFDBA.MATCHINGALARM(MA_MMID,MA_LACTNUMBER,MA_DATE,MA_FANAME,MA_LANAME,MA_FACTNUMBER) 
+			VALUES(#{record.maMmId},#{record.maLaCtNumber},DEFAULT,#{record.maFaName},#{record.maLaName},#{record.maFaCtNumber}) 
+		</foreach>	
+		SELECT 1 FROM DUAL
+	</insert>
+	<insert id="userFoundRegister" parameterType="icia.js.lostandfound.beans.ItemsBean" 
+	useGeneratedKeys="true" keyProperty="falist[0].faCtNumber" keyColumn="FA_CTNUMBER">
+		INSERT INTO LFDBA.FOUNDARTICLE${monthList[0].month}
+		(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{falist[0].faUcCode},'U'||TO_CHAR(TO_DATE(#{falist[0].faDate}, 'YYYY-MM-DD'), 'YYYYMMDD')||LFDBA.USERFOUNDCTNUM.NEXTVAL
+		,#{falist[0].faDepPlace},#{falist[0].faName},#{falist[0].faUnique},
+		#{falist[0].faMcCode},#{falist[0].faDate},#{falist[0].faMmId},#{falist[0].faStatus},#{falist[0].faHour},
+		#{falist[0].faColor},#{falist[0].faPlace})
+	</insert>
+	<insert id="userFoundImgRegister" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT ALL
+		<foreach collection="faImgList" item="record" index="i" separator=" ">
+			INTO LFDBA.FOUNDARTICLEIMAGES(FI_IMGCODE,FI_FACODE,FI_NAME, FI_LOC,FI_CATE,FI_COLORCATE) 
+			VALUES(#{record.fiFacode}||<if test="i==0">'S'</if><if test="i==1">'B'</if><if test="i==2">'C'</if>,#{record.fiFacode}, #{record.fiName},#{record.fiLoc},#{record.fiCate},#{record.fiColorCate}) 
+		</foreach>	
+		SELECT 1 FROM DUAL	
+	</insert>
+	<insert id="userLostRegister" parameterType="icia.js.lostandfound.beans.ItemsBean" 
+	useGeneratedKeys="true" keyProperty="lalist[0].laCtNumber" keyColumn="LA_CTNUMBER">
+		INSERT INTO LFDBA.LOSTARTICLE${monthList[0].month}
+		(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{lalist[0].laMcCode},#{lalist[0].laUcCode},'U'||TO_CHAR(TO_DATE(#{lalist[0].laDate}, 'YYYY-MM-DD'), 'YYYYMMDD')||LFDBA.USERLOSTCTNUM.NEXTVAL,#{lalist[0].laName},#{lalist[0].laPlace},#{lalist[0].laDate},#{lalist[0].laStatus},
+		#{lalist[0].laLocation},#{lalist[0].laUnique},#{lalist[0].laMmId},#{lalist[0].laHour})
+	</insert>
+	<insert id="userLostImgRegister" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT ALL
+		<foreach collection="laImgList" item="record" index="i" separator=" ">
+			INTO LFDBA.LOSTARTICLEIMAGES(LI_IMGCODE,LI_LACODE, LI_NAME, LI_LOC,LI_CATE,LI_COLORCATE) 
+			VALUES(#{record.liLaCode}||<if test="i==0">'S'</if><if test="i==1">'B'</if><if test="i==2">'C'</if>,#{record.liLaCode}, #{record.liName}, #{record.liLoc},#{record.liCate},#{record.liColorCate}) 
+		</foreach>	
+		SELECT 1 FROM DUAL	
+	</insert>
+	<select id="lostMatchingImgList" parameterType="string" resultType="icia.js.lostandfound.beans.FoundArticleImages">
+		SELECT FI_IMGCODE AS FIIMGCODE,FI_FACODE AS FIFACODE, FI_NAME AS FINAME , FI_LOC AS FILOC, FI_CATE AS FICATE, FI_COLORCATE AS FICOLORCATE FROM 
+		LFDBA.FOUNDARTICLEIMAGES WHERE FI_FACODE=#{faCtNumber}
+	</select>
+	<resultMap id="lostMatchingList" type="icia.js.lostandfound.beans.FoundArticleBean">
+		<id property="faCtNumber" column="FACTNUMBER"/>
+		<result property="faMmId" column="FAMMID" />
+		<association property="member" column="FAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getFoundMember"/>
+		<collection property="faImgList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundArticleImages" select="lostMatchingImgList"/>
+		<collection property="faCommentList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundCommentsBean" select="getMyCommentFoundCollection"/>
+	</resultMap>
+	<select id="lostMatching" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="lostMatchingList">
+	SELECT DISTINCT FAMCCODE,FAUCCODE,FACTNUMBER,FANAME,FAPLACE,FADATE,FAMMID,FASTATUS,FAUNIQUE,FAHOUR,FACOLOR,FADEPPLACE
+	FROM
+	(
+		<foreach collection="monthList" item="record"
+			separator="UNION">
+			SELECT FA_MCCODE AS MCCODE,MC_NAME AS FAMCCODE, FA_UCCODE AS UCCODE,UC_NAME AS FAUCCODE, FA_CTNUMBER AS
+			FACTNUMBER, FA_NAME AS FANAME, FA_PLACE AS PLACE,PL_NAME AS FAPLACE, FA_DATE AS FADATE,
+			FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE,
+			FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, FA_DEPPLACE AS FADEPPLACE
+			FROM LFDBA.FOUNDARTICLE${record.month}
+			INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+            INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+            INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+            INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+		</foreach>
+	) f
+	JOIN TABLE(matches(f.FAUNIQUE||f.FADEPPLACE, 
+	keyword_type(<foreach collection="mInfo.keyword" item="record" separator=",">#{record}</foreach>))) a
+	ON 1=1
+	<where>
+		<if test="mInfo != null">
+		<if test="mInfo.mcCode != null">
+			AND f.MCCODE=#{mInfo.mcCode}
+		</if>
+		<if test="mInfo.ucCode != null">
+			AND f.UCCODE=#{mInfo.ucCode}
+		</if>
+		<if test="mInfo.plCode != null">
+			AND f.PLACE=#{mInfo.plCode}
+		</if>
+		</if>
+	</where>
+	</select>
+	<select id="foundMatchingImgList" parameterType="string" resultType="icia.js.lostandfound.beans.LostArticleImages">
+		SELECT LI_IMGCODE AS LIIMGCODE,LI_LACODE AS LILACODE, LI_NAME AS LINAME , LI_LOC AS LILOC, LI_CATE AS LICATE, LI_COLORCATE AS LICOLORCATE FROM 
+		LFDBA.LOSTARTICLEIMAGES WHERE LI_LACODE=#{laCtNumber}
+	</select>
+	<resultMap id="foundMatchingList" type="icia.js.lostandfound.beans.LostArticleBean">
+		<id property="laCtNumber" column="LACTNUMBER"/>
+		<result property="laMmId" column="LAMMID" />
+		<association property="member" column="LAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getLostMember"/>
+		<collection property="laImgList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostArticleImages" select="foundMatchingImgList"/>
+		<collection property="laCommentList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostCommentsBean" select="getMyCommentLostCollection"/>
+	</resultMap>
+	<select id="foundMatching" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="foundMatchingList">
+	SELECT DISTINCT LAMCCODE,LAUCCODE,LACTNUMBER,LANAME,LAPLACE,LADATE,LAMMID,LASTATUS,LAUNIQUE,LAHOUR,LALOCATION
+	FROM
+	(
+		<foreach collection="monthList" item="record" separator="UNION">
+			SELECT LA_MCCODE AS MCCODE,MC_NAME AS LAMCCODE,LA_UCCODE AS UCCODE,UC_NAME AS LAUCCODE, LA_CTNUMBER AS
+			LACTNUMBER, LA_NAME AS LANAME, LA_PLACE AS LAPLACE, LA_DATE AS LADATE,
+			LA_MMID AS LAMMID, CA_NAME AS LASTATUS, LA_UNIQUE AS LAUNIQUE,
+			LA_HOUR AS LAHOUR,LA_LOCATION AS LOCATION, LO_NAME AS LALOCATION
+			FROM LFDBA.LOSTARTICLE${record.month}
+			INNER JOIN LFDBA.LOCATION ON LO_CODE=LA_LOCATION                
+            INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= LA_MCCODE
+            INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= LA_UCCODE AND UC_MCCODE=LA_MCCODE
+            INNER JOIN LFDBA.CATEGORIES ON CA_CODE=LA_STATUS 
+		</foreach>
+	) l
+	JOIN TABLE(matches(l.LANAME||l.LAPLACE, 
+	keyword_type(<foreach collection="mInfo.keyword" item="record" separator=",">#{record}</foreach>))) a
+	ON 1=1
+	<where>
+		<if test="mInfo != null">
+		<if test="mInfo.mcCode != null">
+			AND l.MCCODE=#{mInfo.mcCode}
+		</if>
+		<if test="mInfo.ucCode != null">
+			AND l.UCCODE=#{mInfo.ucCode}
+		</if>
+		<if test="mInfo.loCode != null">
+			AND l.LOCATION=#{mInfo.loCode}
+		</if>
+		</if>
+	</where>
+	</select>
+	<select id="getSrhFoundList" parameterType="string" resultType="icia.js.lostandfound.beans.FoundArticleImages">
+		SELECT FI_IMGCODE,FI_FACODE AS FIFACODE, FI_NAME AS FINAME , FI_LOC AS FILOC, FI_CATE AS FICATE, FI_COLORCATE AS FICOLORCATE FROM 
+		LFDBA.FOUNDARTICLEIMAGES WHERE FI_FACODE=#{faCtNumber}
+	</select>
+	<resultMap id="getRSrhFoundList" type="icia.js.lostandfound.beans.FoundArticleBean">
+		<id property="faCtNumber" column="FACTNUMBER"/>
+		<result property="faMmId" column="FAMMID" />
+		<association property="member" column="FAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getFoundMember"/>
+		<collection property="faImgList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundArticleImages" select="getSrhFoundList"/>
+		<collection property="faCommentList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundCommentsBean" select="getMyCommentFoundCollection"/>
+	</resultMap>
+	<select id="searchFoundDetail" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getRSrhFoundList">
+	SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+  		(
+    		SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE, ROWNUM AS SEQ FROM  
+		    (
+	
+				SELECT MCCODE,FAMCCODE, UCCODE,FAUCCODE, FACTNUMBER, FANAME, PLACE,FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+				(
+			        <foreach collection="monthList" item="record" separator="UNION">
+			    	SELECT FA_MCCODE AS MCCODE,MC_NAME AS FAMCCODE, FA_UCCODE AS UCCODE,UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, FA_PLACE AS PLACE,PL_NAME AS FAPLACE, FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, FA_DEPPLACE AS FADEPPLACE 
+			        FROM LFDBA.FOUNDARTICLE${record.month}
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+	                INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+	                INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+	                INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			    	</foreach>
+			    ) l
+					<where>
+						<if test="sInfo != null">
+						<if test="sInfo.mcCode != null">
+							AND MCCODE=#{sInfo.mcCode} 
+						</if>
+						<if test="sInfo.ucCode != null">
+							AND UCCODE=#{sInfo.ucCode}
+						</if>
+						<if test="sInfo.place != null">
+							AND PLACE=#{sInfo.place}
+						</if>
+						<if test="sInfo.name != null">
+							AND FANAME LIKE '%'||#{sInfo.name}||'%'
+						</if>
+						<if test="sInfo.depPlace != null">
+							AND FADEPPLACE LIKE '%'||#{sInfo.depPlace}||'%'
+						</if>
+						<if test="sInfo.color != null">
+							AND FACOLOR LIKE '%'||#{sInfo.color}||'%'
+						</if>
+						<if test="sInfo.sDate!= null">
+							AND TO_DATE(FADATE,'YYYY-MM-DD') &gt;=
+							TO_DATE(#{sInfo.sDate},'YYYY-MM-DD')
+						</if>
+						<if test="sInfo.eDate!= null">
+							AND TO_DATE(FADATE,'YYYY-MM-DD') &lt;=
+							TO_DATE(#{sInfo.eDate},'YYYY-MM-DD')
+						</if>
+						</if>
+					</where>
+					ORDER BY <if test="sortInfo.sortNum==1">FADATE</if>
+					<if test="sortInfo.sortNum==2">
+						FANAME
+					</if>
+					<if test="sortInfo.sortNum==3">
+						FAPLACE
+					</if>
+					<if test="sortInfo.sortNum==4">
+						FADEPPLACE
+					</if>
+					<if test="sortInfo.asc">
+						ASC
+					</if>
+					<if test="!sortInfo.asc">
+						DESC
+					</if>
+					)
+				)WHERE SEQ &lt;(#{startIdx} + #{rowNum}) AND SEQ &gt;=#{startIdx}
+	</select>
+	
+	<select id="getSrhLostList" parameterType="string" resultType="icia.js.lostandfound.beans.LostArticleImages">
+		SELECT LI_LACODE AS LILACODE, LI_NAME AS LINAME , LI_LOC AS LILOC, LI_CATE AS LICATE, LI_COLORCATE AS LICOLORCATE FROM 
+		LFDBA.LOSTARTICLEIMAGES WHERE LI_LACODE=#{laCtNumber}
+	</select>
+	<resultMap id="getRSrhLostList" type="icia.js.lostandfound.beans.LostArticleBean">
+		<id property="laCtNumber" column="LACTNUMBER"/>
+		<result property="laMmId" column="LAMMID" />
+		<association property="member" column="LAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getLostMember"/>
+		<collection property="laImgList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostArticleImages" select="getSrhLostList"/>
+		<collection property="laCommentList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostCommentsBean" select="getMyCommentLostCollection"/>
+	</resultMap>
+	<select id="searchLostDetail" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getRSrhLostList">
+	SELECT LAMCCODE, LAUCCODE, LACTNUMBER, LANAME, LAPLACE, LADATE, LAMMID, LASTATUS, LAUNIQUE, LAHOUR, LALOCATION FROM 
+  		(
+    		SELECT LAMCCODE, LAUCCODE, LACTNUMBER, LANAME, LAPLACE, LADATE, LAMMID, LASTATUS, LAUNIQUE, LAHOUR, LALOCATION, ROWNUM AS SEQ FROM  
+		    (
+		    	SELECT MCCODE,LAMCCODE, UCCODE,LAUCCODE, LACTNUMBER, LANAME, LAPLACE, LADATE, LAMMID, LASTATUS, LAUNIQUE, LAHOUR, LOCATION,LALOCATION FROM 
+		    	(
+			        <foreach collection="monthList" item="record" separator="UNION">
+			    	SELECT LA_MCCODE AS MCCODE,MC_NAME AS LAMCCODE,LA_UCCODE AS UCCODE, UC_NAME AS LAUCCODE, LA_CTNUMBER AS LACTNUMBER, LA_NAME AS LANAME, LA_PLACE AS LAPLACE, LA_DATE AS LADATE, LA_MMID AS LAMMID, CA_NAME AS LASTATUS, LA_UNIQUE AS LAUNIQUE, LA_HOUR AS LAHOUR,LA_LOCATION AS LOCATION,LO_NAME AS LALOCATION  
+			        FROM LFDBA.LOSTARTICLE${record.month} 
+	                INNER JOIN LFDBA.LOCATION ON LO_CODE=LA_LOCATION                
+	                INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= LA_MCCODE
+	                INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= LA_UCCODE AND UC_MCCODE=LA_MCCODE
+	                INNER JOIN LFDBA.CATEGORIES ON CA_CODE=LA_STATUS 
+			    	</foreach>
+			    )
+					<where>
+						<if test="sInfo != null">
+						<if test="sInfo.mcCode != null">
+							AND MCCODE=#{sInfo.mcCode} 
+						</if>
+						<if test="sInfo.ucCode != null">
+							AND UCCODE=#{sInfo.ucCode}
+						</if>
+						<if test="sInfo.place != null">
+							AND LAPLACE LIKE '%'||#{sInfo.place}||'%'
+						</if>
+						<if test="sInfo.name != null">
+							AND LANAME LIKE '%'||#{sInfo.name}||'%'
+						</if>
+						<if test="sInfo.location != null">
+							AND LALOCATION=#{sInfo.location}
+						</if>
+						<if test="sInfo.sDate!= null">
+							AND TO_DATE(LADATE,'YYYY-MM-DD') &gt;=
+							TO_DATE(#{sInfo.sDate},'YYYY-MM-DD')
+						</if>
+						<if test="sInfo.eDate!= null">
+							AND TO_DATE(LADATE,'YYYY-MM-DD') &lt;=
+							TO_DATE(#{sInfo.eDate},'YYYY-MM-DD')
+						</if>
+						</if>
+					</where>
+					ORDER BY <if test="sortInfo.sortNum==1">
+					LADATE
+					</if>
+					<if test="sortInfo.sortNum==2">
+						LANAME
+					</if>
+					<if test="sortInfo.sortNum==3">
+						LAPLACE
+					</if>
+					<if test="sortInfo.asc">
+						ASC
+					</if>
+					<if test="!sortInfo.asc">
+						DESC
+					</if>
+					)
+				)WHERE SEQ &lt;(#{startIdx} + #{rowNum}) AND SEQ &gt;=#{startIdx}
+	</select>
+	<select id="getTotalLostSearchNum" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="int">
+		SELECT COUNT(LACTNUMBER) FROM  
+		    (
+	
+				SELECT LAMCCODE, LAUCCODE, LACTNUMBER, LANAME, LAPLACE, LADATE, LAMMID, LASTATUS, LAUNIQUE, LAHOUR, LALOCATION FROM 
+				(
+			        <foreach collection="monthList" item="record" separator="UNION">
+			    	SELECT LA_MCCODE AS LAMCCODE, LA_UCCODE AS LAUCCODE, LA_CTNUMBER AS LACTNUMBER, LA_NAME AS LANAME, LA_PLACE AS LAPLACE, LA_DATE AS LADATE, LA_MMID AS LAMMID, LA_STATUS AS LASTATUS, LA_UNIQUE AS LAUNIQUE, LA_HOUR AS LAHOUR,LA_LOCATION AS LALOCATION 
+		        	FROM LFDBA.LOSTARTICLE${record.month} 
+			    	</foreach>
+			    )
+					<where>
+						<if test="sInfo != null">
+						<if test="sInfo.mcCode != null">
+							AND LAMCCODE=#{sInfo.mcCode} 
+						</if>
+						<if test="sInfo.ucCode != null">
+							AND LAUCCODE=#{sInfo.ucCode}
+						</if>
+						<if test="sInfo.place != null">
+							AND LAPLACE LIKE '%'||#{sInfo.place}||'%'
+						</if>
+						<if test="sInfo.name != null">
+							AND LANAME LIKE '%'||#{sInfo.name}||'%'
+						</if>
+						<if test="sInfo.location != null">
+							AND LALOCATION=#{sInfo.location}
+						</if>
+						<if test="sInfo.sDate!= null">
+							AND TO_DATE(LADATE,'YYYY-MM-DD') &gt;=
+							TO_DATE(#{sInfo.sDate},'YYYY-MM-DD')
+						</if>
+						<if test="sInfo.eDate!= null">
+							AND TO_DATE(LADATE,'YYYY-MM-DD') &lt;=
+							TO_DATE(#{sInfo.eDate},'YYYY-MM-DD')
+						</if>
+						</if>
+					</where>
+					)
+	</select>
+	<select id="getTotalFoundSearchNum" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="int">
+		SELECT COUNT(FACTNUMBER) FROM  
+		    (
+	
+				SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+				(
+			        <foreach collection="monthList" item="record" separator="UNION">
+			    	SELECT FA_MCCODE AS FAMCCODE, FA_UCCODE AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, FA_PLACE AS FAPLACE, FA_DATE AS FADATE, FA_MMID AS FAMMID, FA_STATUS AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, FA_DEPPLACE AS FADEPPLACE
+			        FROM LFDBA.FOUNDARTICLE${record.month} 
+			    	</foreach>
+			    )
+					<where>
+						<if test="sInfo != null">
+						<if test="sInfo.mcCode != null">
+							AND FAMCCODE=#{sInfo.mcCode} 
+						</if>
+						<if test="sInfo.ucCode != null">
+							AND FAUCCODE=#{sInfo.ucCode}
+						</if>
+						<if test="sInfo.place != null">
+							AND FAPLACE=#{sInfo.place}
+						</if>
+						<if test="sInfo.name != null">
+							AND FANAME LIKE '%'||#{sInfo.name}||'%'
+						</if>
+						<if test="sInfo.depPlace != null">
+							AND FADEPPLACE LIKE '%'||#{sInfo.depPlace}||'%'
+						</if>
+						<if test="sInfo.color != null">
+							AND FACOLOR LIKE '%'||#{sInfo.color}||'%'
+						</if>
+						<if test="sInfo.sDate!= null">
+							AND TO_DATE(FADATE,'YYYY-MM-DD') &gt;=
+							TO_DATE(#{sInfo.sDate},'YYYY-MM-DD')
+						</if>
+						<if test="sInfo.eDate!= null">
+							AND TO_DATE(FADATE,'YYYY-MM-DD') &lt;=
+							TO_DATE(#{sInfo.eDate},'YYYY-MM-DD')
+						</if>
+						</if>
+					</where>
+					)
+	</select>
+	<select id="getTotalFoundNum"
+		parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="int">
+		SELECT 
+			<foreach collection="monthList" item="record" separator="+">
+				(SELECT COUNT(FA_CTNUMBER) FROM LFDBA.FOUNDARTICLE${record.month}) 
+		    </foreach>
+		 AS TOTAL_CNT FROM DUAL
+	</select>
+	<select id="getTotalLostNum" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="int">
+		SELECT 
+			<foreach collection="monthList" item="record" separator="+">
+				(SELECT COUNT(LA_CTNUMBER) FROM LFDBA.LOSTARTICLE${record.month}) 
+		    </foreach>
+		 AS TOTAL_CNT FROM DUAL
+	</select>
+	<select id="getFoundMember" parameterType="string" resultType="icia.js.lostandfound.beans.MemberBean">
+		SELECT MM_ID AS MMID , MM_NAME AS MMNAME,MM_EMAIL AS MMEMAIL, MM_PHONE AS MMPHONE , MM_SNS AS MMSNS , MM_LIMIT AS MMLIMIT FROM
+		LFDBA.MEMBERS WHERE MM_ID=#{faMmId}
+	</select>
+	<select id="getImgFoundList" parameterType="string" resultType="icia.js.lostandfound.beans.FoundArticleImages">
+		SELECT FI_FACODE AS FIFACODE, FI_NAME AS FINAME , FI_LOC AS FILOC, FI_CATE AS FICATE, FI_COLORCATE AS FICOLORCATE FROM 
+		LFDBA.FOUNDARTICLEIMAGES WHERE FI_FACODE=#{faCtNumber}
+	</select>
+	<resultMap id="getRImgFoundList" type="icia.js.lostandfound.beans.FoundArticleBean">
+		<id property="faCtNumber" column="FACTNUMBER"/>
+		<result property="faMmId" column="FAMMID" />
+		<association property="member" column="FAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getFoundMember"/>
+		<collection property="faImgList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundArticleImages" select="getImgFoundList"/>
+		<collection property="faCommentList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundCommentsBean" select="getMyCommentFoundCollection"/>
+	</resultMap>
+	<select id="getFoundTotal" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getRImgFoundList">
+		 SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+  		(
+    		SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE, ROWNUM AS SEQ FROM  
+		    (
+		    	SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+		    	(
+			        <foreach collection="monthList" item="record" separator="UNION">
+			    	SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE, FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, FA_DEPPLACE AS FADEPPLACE 
+			        FROM LFDBA.FOUNDARTICLE${record.month} 
+			        INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+	                INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+	                INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+	                INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+			    	</foreach>
+		        )ORDER BY 
+		        <if test="sortInfo.sortNum==1">
+					FADATE
+				</if>
+				<if test="sortInfo.sortNum==2">
+					FANAME
+				</if>
+				<if test="sortInfo.sortNum==3">
+					FAPLACE
+				</if>
+				<if test="sortInfo.sortNum==4">
+					FADEPPLACE
+				</if>
+				<if test="sortInfo.asc">
+					ASC
+				</if>
+				<if test="!sortInfo.asc">
+					DESC
+				</if>
+			)
+		)WHERE SEQ &lt;(#{startIdx} + #{rowNum}) AND SEQ &gt;=#{startIdx}
+	</select>
+	<select id="getLostMember" parameterType="string" resultType="icia.js.lostandfound.beans.MemberBean">
+		SELECT MM_ID AS MMID , MM_NAME AS MMNAME,MM_EMAIL AS MMEMAIL, MM_PHONE AS MMPHONE , MM_SNS AS MMSNS , MM_LIMIT AS MMLIMIT FROM
+		LFDBA.MEMBERS WHERE MM_ID=#{laMmId}
+	</select>
+	<select id="getImgLostList" parameterType="string" resultType="icia.js.lostandfound.beans.LostArticleImages">
+		SELECT LI_IMGCODE AS LIIMGCODE,LI_LACODE AS LILACODE, LI_NAME AS LINAME , LI_LOC AS LILOC, LI_CATE AS LICATE, LI_COLORCATE AS LICOLORCATE FROM 
+		LFDBA.LOSTARTICLEIMAGES WHERE LI_LACODE=#{laCtNumber}
+	</select>
+	<resultMap id="getRImgLostList" type="icia.js.lostandfound.beans.LostArticleBean">
+	    <id property="laCtNumber" column="LACTNUMBER"/>
+	    <result property="laMmId" column="LAMMID" />
+		<association property="member" column="LAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getLostMember"/>
+	    <collection property="laImgList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostArticleImages" select="getImgLostList"/>
+		<collection property="laCommentList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostCommentsBean" select="getMyCommentLostCollection"/>
+	</resultMap>
+	<select id="getLostTotal" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getRImgLostList">
+		SELECT LAMCCODE, LAUCCODE, LACTNUMBER, LANAME, LAPLACE, LADATE, LAMMID, LASTATUS, LAUNIQUE, LAHOUR, LALOCATION FROM 
+  		(
+    		SELECT LAMCCODE, LAUCCODE, LACTNUMBER, LANAME, LAPLACE, LADATE, LAMMID, LASTATUS, LAUNIQUE, LAHOUR, LALOCATION, ROWNUM AS SEQ FROM  
+		    (
+		    	SELECT LAMCCODE, LAUCCODE, LACTNUMBER, LANAME, LAPLACE, LADATE, LAMMID, LASTATUS, LAUNIQUE, LAHOUR, LALOCATION FROM 
+		    	(
+		    	<foreach collection="monthList" item="record" separator="UNION">
+		    	SELECT MC_NAME AS LAMCCODE, UC_NAME AS LAUCCODE, LA_CTNUMBER AS LACTNUMBER, LA_NAME AS LANAME, LA_PLACE AS LAPLACE, LA_DATE AS LADATE, LA_MMID AS LAMMID, CA_NAME AS LASTATUS, LA_UNIQUE AS LAUNIQUE, LA_HOUR AS LAHOUR,LO_NAME AS LALOCATION 
+		        FROM LFDBA.LOSTARTICLE${record.month} 
+                INNER JOIN LFDBA.LOCATION ON LO_CODE=LA_LOCATION                
+                INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= LA_MCCODE
+                INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= LA_UCCODE AND UC_MCCODE=LA_MCCODE
+                INNER JOIN LFDBA.CATEGORIES ON CA_CODE=LA_STATUS
+		    	</foreach>
+		        )ORDER BY 
+		        <if test="sortInfo.sortNum==1">
+					LADATE
+				</if>
+				<if test="sortInfo.sortNum==2">
+					LANAME
+				</if>
+				<if test="sortInfo.sortNum==3">
+					LAPLACE
+				</if>
+				<if test="sortInfo.asc">
+					ASC
+				</if>
+				<if test="!sortInfo.asc">
+					DESC
+				</if>
+			)
+		)WHERE SEQ &lt;(#{startIdx} + #{rowNum}) AND SEQ &gt;=#{startIdx}
+	</select>
+	
+</mapper>

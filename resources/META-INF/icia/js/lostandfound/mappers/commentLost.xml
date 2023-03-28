@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icia.js.lostandfound.mapper.commentInter">
+
+<!--  4,5차시도 jdbcType 겁나짜증난다 lcoCode 인식을못한다 이유가뭘까 실패 ::ApiController의 모델변수가 일치X 이유 ::-->
+<insert id="insLostComment" parameterType="icia.js.lostandfound.beans.LostCommentsBean">
+INSERT INTO LFDBA.LOSTCOMMENTS(LCO_CODE,LCO_DATE,LCO_COMMENT,LCO_MMID) 
+	VALUES(#{lcoCode}, DEFAULT,#{lcoComment},#{lcoMmId})
+</insert>
+
+<!-- 원본 
+<select id="lostcommentList" parameterType="icia.js.lostandfound.beans.LostArticleBean" resultType="icia.js.lostandfound.beans.LostArticleBean">
+SELECT LCO_CODE AS LCOCODE,LCO_DATE AS LCODATE,LCO_MMID AS LCOMMID,LCO_COMMENT AS LCOCOMMENT 
+FROM LFDBA.LOSTCOMMENTS 
+</select>
+-->
+<select id="lostcommentList" parameterType="icia.js.lostandfound.beans.LostArticleBean" resultType="icia.js.lostandfound.beans.LostCommentsBean">
+  SELECT LCO_CODE AS LCOCODE, LCO_DATE AS LCODATE, LCO_MMID AS LCOMMID, LCO_COMMENT AS LCOCOMMENT, MM_NAME AS LCOMMNAME
+  FROM LFDBA.LOSTCOMMENTS
+  INNER JOIN LFDBA.MEMBERS ON MM_ID=LCO_MMID
+  WHERE LCO_CODE = #{laCtNumber}
+  ORDER BY LCO_DATE
+</select>
+</mapper>

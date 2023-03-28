@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icia.js.lostandfound.mapper.commentInter">
+
+<!--  4,5차시도 jdbcType 겁나짜증난다 lcoCode 인식을못한다 이유가뭘까 실패 ::ApiController의 모델변수가 일치X 이유 ::-->
+
+<insert id="insFoundComment" parameterType="icia.js.lostandfound.beans.FoundCommentsBean">
+INSERT INTO LFDBA.FOUNDCOMMENTS(FCO_CODE,FCO_DATE,FCO_COMMENT,FCO_MMID)
+	VALUES(#{fcoCode},DEFAULT,#{fcoComment},#{fcoMmId})
+</insert>
+
+<select id="foundcommentList" parameterType="icia.js.lostandfound.beans.FoundArticleBean" resultType="icia.js.lostandfound.beans.FoundCommentsBean">
+ SELECT FCO_CODE AS FCOCODE,FCO_DATE AS FCODATE, FCO_MMID AS FCOMMID,FCO_COMMENT AS FCOCOMMENT , MM_NAME AS FCOMMNAME
+ FROM LFDBA.FOUNDCOMMENTS
+ INNER JOIN LFDBA.MEMBERS ON MM_ID=FCO_MMID
+ WHERE FCO_CODE = #{faCtNumber}
+ ORDER BY FCO_DATE
+</select>
+
+</mapper>

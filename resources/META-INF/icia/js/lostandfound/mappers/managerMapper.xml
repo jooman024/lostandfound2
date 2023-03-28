@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="icia.js.lostandfound.mapper.managerMapperInter">
+	<select id="selLostComments" parameterType="string" resultType="icia.js.lostandfound.beans.LostCommentsBean">
+		SELECT LCO_CODE AS LCOCODE , LCO_MMID AS LCOMMID, LCO_DATE LCODATE, LCO_COMMENT AS LCOCOMMENT FROM
+		LFDBA.LOSTCOMMENTS
+	</select>
+	<delete id="delLostComment" parameterType="icia.js.lostandfound.beans.LostCommentsBean">
+		DELETE FROM LFDBA.LOSTCOMMENTS WHERE LCO_CODE=#{lcoCode} AND LCO_MMID=#{lcoMmId}
+	</delete>
+    <select id="selFoundComments" parameterType="string" resultType="icia.js.lostandfound.beans.FoundCommentsBean">
+		SELECT FCO_CODE AS FCOCODE , FCO_MMID AS FCOMMID, FCO_DATE FCODATE, FCO_COMMENT AS FCOCOMMENT FROM
+		LFDBA.FOUNDCOMMENTS
+	</select>
+	<delete id="delFoundComment" parameterType="icia.js.lostandfound.beans.FoundCommentsBean">
+		DELETE LFDBA.FOUNDCOMMENTS WHERE FCO_CODE=#{fcoCode} AND FCO_MMID=#{fcoMmId}
+	</delete>
+	<select id="selMember" parameterType="string" resultType="icia.js.lostandfound.beans.MemberBean">
+		SELECT MM_ID AS MMID , MM_NAME AS MMNAME, MM_EMAIL AS MMEMAIL, MM_PHONE AS MMPHONE , MM_SNS AS MMSNS , MM_LIMIT AS MMLIMIT FROM
+		LFDBA.MEMBERS WHERE MM_SNS != 'AG'
+	</select>
+	<update id="updMember"  parameterType="icia.js.lostandfound.beans.MemberBean">
+		UPDATE LFDBA.MEMBERS SET 
+    		MM_SNS = #{mmSns}  
+			WHERE MM_ID =#{mmId}
+	</update>
+	<select id="getStatDay" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="icia.js.lostandfound.beans.StatisticsBean">
+		SELECT 
+		(
+		<foreach collection="monthList" item="record" separator="+">
+			(SELECT COUNT(FA_CTNUMBER) FROM LFDBA.FOUNDARTICLE${record.month} WHERE FA_CTNUMBER LIKE 'U%' AND FA_POSTDATE >= SYSDATE - 1)
+		</foreach>
+		) AS UFTOTAL ,
+		(
+		<foreach collection="monthList" item="record" separator="+">
+			(SELECT COUNT(LA_CTNUMBER) FROM LFDBA.LOSTARTICLE${record.month} WHERE LA_CTNUMBER LIKE 'U%' AND LA_POSTDATE >= SYSDATE - 1)
+		</foreach>
+		) AS ULTOTAL ,
+		(
+		(SELECT COUNT(*) FROM LFDBA.FOUNDCOMMENTS WHERE FCO_DATE >= SYSDATE - 1)+
+		(SELECT COUNT(*) FROM LFDBA.LOSTCOMMENTS WHERE LCO_DATE >= SYSDATE - 1)
+		) AS CMTOTAL ,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY))AS MMTOTAL ,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G00' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G00,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G01' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G01,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G02' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G02,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G03' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G03,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G04' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G04,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G05' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G05,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G06' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G06,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G07' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G07,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G08' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G08,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G09' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G09,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G10' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G10,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G11' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G11,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G12' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G12,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G13' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G13,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G14' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G14,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G15' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS G15,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_TYPE=2 AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY))AS NDUPRTOKEN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_TYPE=2 AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY)AS DUPRTOKEN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS TOKEN ,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-EDGE%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS EDGE,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-FIREFOX%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS FIREFOX,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-OPERA%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS OPERA,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-WHALE%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS WHALE,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-CHROME%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS CHROME,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-DUCKDUCKGO%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS DUCKDUCKGO,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-SAFARI%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS SAFARI,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-IE%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS IE,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG INNER JOIN LFDBA.MEMBERS ON AC_USERID=MM_ID WHERE MM_SNS LIKE '%N' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS NAVERLOGIN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG INNER JOIN LFDBA.MEMBERS ON AC_USERID=MM_ID WHERE MM_SNS LIKE '%K' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS KAKAOLOGIN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG INNER JOIN LFDBA.MEMBERS ON AC_USERID=MM_ID WHERE MM_SNS LIKE '%G' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY) AS GOOGLELOGIN,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_TYPE=3 AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY)) AS NOOB,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_TYPE=1 AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '1' DAY)) AS RETURNING
+		FROM DUAL
+	</select>
+	<select id="getStatWeek" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="icia.js.lostandfound.beans.StatisticsBean">
+		SELECT 
+		(
+		<foreach collection="monthList" item="record" separator="+">
+			(SELECT COUNT(FA_CTNUMBER) FROM LFDBA.FOUNDARTICLE${record.month} WHERE FA_CTNUMBER LIKE 'U%' AND FA_POSTDATE >= SYSDATE - 7)
+		</foreach>
+		) AS UFTOTAL ,
+		(
+		<foreach collection="monthList" item="record" separator="+">
+			(SELECT COUNT(LA_CTNUMBER) FROM LFDBA.LOSTARTICLE${record.month} WHERE LA_CTNUMBER LIKE 'U%' AND LA_POSTDATE >= SYSDATE - 7)
+		</foreach>
+		) AS ULTOTAL ,
+		(
+		(SELECT COUNT(*) FROM LFDBA.FOUNDCOMMENTS WHERE FCO_DATE >= SYSDATE - 7)+
+		(SELECT COUNT(*) FROM LFDBA.LOSTCOMMENTS WHERE LCO_DATE >= SYSDATE - 7)
+		) AS CMTOTAL ,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY))AS MMTOTAL ,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G00' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G00,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G01' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G01,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G02' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G02,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G03' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G03,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G04' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G04,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G05' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G05,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G06' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G06,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G07' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G07,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G08' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G08,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G09' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G09,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G10' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G10,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G11' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G11,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G12' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G12,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G13' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G13,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G14' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G14,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G15' AND PV_VISITDATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS G15,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_TYPE=2 AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY))AS NDUPRTOKEN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_TYPE=2 AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY)AS DUPRTOKEN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS TOKEN ,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-EDGE%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS EDGE,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-FIREFOX%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS FIREFOX,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-OPERA%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS OPERA,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-WHALE%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS WHALE,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-CHROME%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS CHROME,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-DUCKDUCKGO%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS DUCKDUCKGO,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-SAFARI%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS SAFARI,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-IE%' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS IE,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG INNER JOIN LFDBA.MEMBERS ON AC_USERID=MM_ID WHERE MM_SNS LIKE '%N' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS NAVERLOGIN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG INNER JOIN LFDBA.MEMBERS ON AC_USERID=MM_ID WHERE MM_SNS LIKE '%K' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS KAKAOLOGIN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG INNER JOIN LFDBA.MEMBERS ON AC_USERID=MM_ID WHERE MM_SNS LIKE '%G' AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY) AS GOOGLELOGIN,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_TYPE=3 AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY)) AS NOOB,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_TYPE=1 AND AC_DATE >= CURRENT_TIMESTAMP - INTERVAL '7' DAY)) AS RETURNING
+		FROM DUAL
+	</select>
+	<select id="getStat" parameterType="icia.js.lostandfound.beans.ItemsBean" resultType="icia.js.lostandfound.beans.StatisticsBean">
+		SELECT 
+		(
+		<foreach collection="monthList" item="record" separator="+">
+			(SELECT COUNT(FA_CTNUMBER) FROM LFDBA.FOUNDARTICLE${record.month} WHERE FA_CTNUMBER LIKE 'U%')
+		</foreach>
+		) AS UFTOTAL ,
+		(
+		<foreach collection="monthList" item="record" separator="+">
+			(SELECT COUNT(LA_CTNUMBER) FROM LFDBA.LOSTARTICLE${record.month} WHERE LA_CTNUMBER LIKE 'U%')
+		</foreach>
+		) AS ULTOTAL ,
+		(
+		(SELECT COUNT(*) FROM LFDBA.FOUNDCOMMENTS)+
+		(SELECT COUNT(*) FROM LFDBA.LOSTCOMMENTS)
+		) AS CMTOTAL ,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG))AS MMTOTAL ,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G00') AS G00,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G01') AS G01,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G02') AS G02,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G03') AS G03,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G04') AS G04,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G05') AS G05,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G06') AS G06,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G07') AS G07,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G08') AS G08,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G09') AS G09,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G10') AS G10,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G11') AS G11,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G12') AS G12,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G13') AS G13,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G14') AS G14,
+		(SELECT COUNT(PV_ACID) FROM LFDBA.PAGEVISITS WHERE PV_PAGEID='G15') AS G15,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_TYPE=2))AS NDUPRTOKEN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_TYPE=2)AS DUPRTOKEN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG) AS TOKEN ,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-EDGE%') AS EDGE,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-FIREFOX%') AS FIREFOX,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-OPERA%') AS OPERA,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-WHALE%') AS WHALE,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-CHROME%') AS CHROME,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-DUCKDUCKGO%') AS DUCKDUCKGO,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-SAFARI%') AS SAFARI,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG WHERE AC_BROSWER LIKE 'W-IE%') AS IE,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG INNER JOIN LFDBA.MEMBERS ON AC_USERID=MM_ID WHERE MM_SNS LIKE '%N') AS NAVERLOGIN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG INNER JOIN LFDBA.MEMBERS ON AC_USERID=MM_ID WHERE MM_SNS LIKE '%K') AS KAKAOLOGIN,
+		(SELECT COUNT(AC_USERID) FROM LFDBA.ACCESSLOG INNER JOIN LFDBA.MEMBERS ON AC_USERID=MM_ID WHERE MM_SNS LIKE '%G') AS GOOGLELOGIN,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_TYPE=3)) AS NOOB,
+		(SELECT COUNT(*) FROM (SELECT DISTINCT AC_USERID FROM LFDBA.ACCESSLOG WHERE AC_TYPE=1)) AS RETURNING
+		FROM DUAL
+	</select>
+	<update id="updSubCategory"  parameterType="icia.js.lostandfound.beans.MainCategoryBean">
+		UPDATE LFDBA.SUBCATEGORIES SET 
+    		UC_NAME = #{subCategoryList[0].ucName}  
+			WHERE UC_MCCODE=#{subCategoryList[0].ucmcCode} AND UC_CODE=#{subCategoryList[0].ucCode} 
+	</update>
+	<insert id="addSubCategory"  parameterType="icia.js.lostandfound.beans.MainCategoryBean">
+		INSERT INTO LFDBA.SUBCATEGORIES(UC_MCCODE,UC_CODE,UC_NAME) 
+		VALUES(#{subCategoryList[0].ucmcCode},
+		#{subCategoryList[0].ucmcCode}||(SELECT TO_NUMBER(SUBSTR(MAX(UC_CODE),3,1))+1 AS CNT FROM LFDBA.SUBCATEGORIES 
+		WHERE UC_MCCODE=#{subCategoryList[0].ucmcCode} 
+		AND UC_CODE LIKE #{subCategoryList[0].ucmcCode}||'%'),#{subCategoryList[0].ucName})
+	</insert>
+	<delete id="delSubCategory" parameterType="icia.js.lostandfound.beans.MainCategoryBean">
+		DELETE FROM LFDBA.SUBCATEGORIES WHERE UC_MCCODE=#{subCategoryList[0].ucmcCode} AND UC_CODE=#{subCategoryList[0].ucCode} 
+	</delete>
+	<select id="selectMainCategories" resultType="icia.js.lostandfound.beans.MainCategoryBean" parameterType="icia.js.lostandfound.beans.MainCategoryBean">
+		SELECT MC_CODE AS MCCODE,
+		MC_NAME AS MCNAME
+		FROM LFDBA.MAINCATEGORIES MC
+	</select>
+	<select id="selectSubCategories" resultType="icia.js.lostandfound.beans.SubCategoryBean" parameterType="icia.js.lostandfound.beans.MainCategoryBean">
+		SELECT UC_MCCODE AS UCMCCODE,
+        MC_NAME AS UCMCNAME,
+		UC_CODE AS UCCODE,
+		UC_NAME AS UCNAME
+		FROM LFDBA.SUBCATEGORIES UC
+        INNER JOIN LFDBA.MAINCATEGORIES ON UC_MCCODE = MC_CODE 
+        WHERE UC_MCCODE=#{subCategoryList[0].ucmcCode}
+	</select>
+	<delete id="delLost" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.LOSTARTICLE${monthList[0].month} WHERE LA_CTNUMBER = #{temp}
+	</delete>
+	<select id="getMgrLostMember" parameterType="string" resultType="icia.js.lostandfound.beans.MemberBean">
+		SELECT MM_ID AS MMID , MM_NAME AS MMNAME,MM_EMAIL AS MMEMAIL, MM_PHONE AS MMPHONE , MM_SNS AS MMSNS , MM_LIMIT AS MMLIMIT FROM
+		LFDBA.MEMBERS WHERE MM_ID=#{laMmId}
+	</select>
+	<select id="MgrLostImgData" parameterType="string" resultType="icia.js.lostandfound.beans.LostArticleImages">
+		SELECT LI_IMGCODE AS LIIMGCODE,LI_LACODE AS LILACODE, LI_NAME AS LINAME , LI_LOC AS LILOC, LI_CATE AS LICATE, LI_COLORCATE AS LICOLORCATE FROM 
+		LFDBA.LOSTARTICLEIMAGES WHERE LI_LACODE=#{laCtNumber}
+	</select>
+	<resultMap id="getMgrLostMap" type="icia.js.lostandfound.beans.LostArticleBean">
+		<id property="laCtNumber" column="LACTNUMBER"/>
+		<result property="laMmId" column="LAMMID" />
+		<association property="member" column="LAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getMgrLostMember"/>
+		<collection property="laImgList" column="LACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.LostArticleImages" select="MgrLostImgData"/>
+	</resultMap>
+	<select id="getMgrLost" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getMgrLostMap">
+		SELECT LAMCCODE,LAUCCODE,LACTNUMBER,LANAME,LAPLACE,LADATE,LAMMID,LASTATUS,LAUNIQUE,LAHOUR,LALOCATION FROM  
+		(
+		<foreach collection="monthList" item="record" separator="UNION">
+			 SELECT LA_MCCODE AS MCCODE,MC_NAME AS LAMCCODE,LA_UCCODE AS UCCODE,UC_NAME AS LAUCCODE, LA_CTNUMBER AS
+							LACTNUMBER, LA_NAME AS LANAME, LA_PLACE AS LAPLACE, LA_DATE AS LADATE,
+							LA_MMID AS LAMMID, CA_NAME AS LASTATUS, LA_UNIQUE AS LAUNIQUE,
+							LA_HOUR AS LAHOUR,LA_LOCATION AS LOCATION, LO_NAME AS LALOCATION
+							FROM LFDBA.LOSTARTICLE${record.month}
+							INNER JOIN LFDBA.LOCATION ON LO_CODE=LA_LOCATION                
+				            INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= LA_MCCODE
+				            INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= LA_UCCODE AND UC_MCCODE=LA_MCCODE
+				            INNER JOIN LFDBA.CATEGORIES ON CA_CODE=LA_STATUS
+		</foreach>
+		)WHERE LACTNUMBER LIKE 'U%'
+	</select>
+	<delete id="delFound" parameterType="icia.js.lostandfound.beans.ItemsBean">
+			DELETE FROM LFDBA.FOUNDARTICLE${monthList[0].month} WHERE FA_CTNUMBER = #{temp}
+	</delete>
+	<select id="getMgrFoundMember" parameterType="string" resultType="icia.js.lostandfound.beans.MemberBean">
+		SELECT MM_ID AS MMID , MM_NAME AS MMNAME,MM_EMAIL AS MMEMAIL, MM_PHONE AS MMPHONE , MM_SNS AS MMSNS , MM_LIMIT AS MMLIMIT FROM
+		LFDBA.MEMBERS WHERE MM_ID=#{faMmId}
+	</select>
+	<select id="MgrFoundMemberImgList" parameterType="string" resultType="icia.js.lostandfound.beans.FoundArticleImages">
+		SELECT FI_IMGCODE AS FIIMGCODE,FI_FACODE AS FIFACODE, FI_NAME AS FINAME , FI_LOC AS FILOC, FI_CATE AS FICATE, FI_COLORCATE AS FICOLORCATE FROM 
+		LFDBA.FOUNDARTICLEIMAGES WHERE FI_FACODE=#{faCtNumber}
+	</select>
+	<resultMap id="getMgrFoundMap" type="icia.js.lostandfound.beans.FoundArticleBean">
+		<id property="faCtNumber" column="FACTNUMBER"/>
+		<result property="faMmId" column="FAMMID" />
+		<association property="member" column="FAMMID" javaType="icia.js.lostandfound.beans.MemberBean" select="getMgrFoundMember"/>
+		<collection property="faImgList" column="FACTNUMBER" javaType="java.util.ArrayList" ofType="icia.js.lostandfound.beans.FoundArticleImages" select="MgrFoundMemberImgList"/>
+	</resultMap>
+	<select id="getMgrFound" parameterType="icia.js.lostandfound.beans.ItemsBean" resultMap="getMgrFoundMap">
+		SELECT FAMCCODE, FAUCCODE, FACTNUMBER, FANAME, FAPLACE, FADATE, FAMMID, FASTATUS, FAUNIQUE, FAHOUR, FACOLOR, FADEPPLACE FROM 
+		(
+		<foreach collection="monthList" item="record" separator="UNION">
+			SELECT MC_NAME AS FAMCCODE, UC_NAME AS FAUCCODE, FA_CTNUMBER AS FACTNUMBER, FA_NAME AS FANAME, PL_NAME AS FAPLACE,
+			    	 FA_DATE AS FADATE, FA_MMID AS FAMMID, CA_NAME AS FASTATUS, FA_UNIQUE AS FAUNIQUE, FA_HOUR AS FAHOUR, FA_COLOR AS FACOLOR, 
+			    	 FA_DEPPLACE AS FADEPPLACE
+			    	 FROM LFDBA.FOUNDARTICLE${record.month}
+			    	 INNER JOIN LFDBA.PLACE ON PL_CODE=FA_PLACE                
+			        INNER JOIN LFDBA.MAINCATEGORIES ON MC_CODE= FA_MCCODE
+			        INNER JOIN LFDBA.SUBCATEGORIES ON UC_CODE= FA_UCCODE AND UC_MCCODE=FA_MCCODE
+			        INNER JOIN LFDBA.CATEGORIES ON CA_CODE=FA_STATUS
+		</foreach>
+		)WHERE FACTNUMBER LIKE 'U%'
+	</select>
+    <insert id="insMemberData" parameterType="icia.js.lostandfound.beans.MemberBean">
+		INSERT INTO LFDBA.MEMBERS(MM_ID, MM_NAME, MM_PHONE,MM_SNS<if test="mmEmail!=null">,MM_EMAIL</if>) 
+		SELECT #{mmId}, #{mmName}, #{mmPhone}, #{mmSns}<if test="mmEmail!=null">,#{mmEmail}</if> FROM DUAL 
+		WHERE NOT EXISTS (SELECT MM_ID FROM LFDBA.MEMBERS WHERE MM_ID = #{mmId})
+	</insert>
+    <insert id="insFoundPoliceDataJAN" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEJAN(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataFEB" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEFEB(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataMAR" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEMAR(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataAPR" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEAPR(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataMAY" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEMAY(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataJUN" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEJUN(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataJUY" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEJUY(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataAUG" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEAUG(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataSEP" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLESEP(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataOCT" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEOCT(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataNOV" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLENOV(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceDataDES" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEDES(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE) 
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+	<insert id="insFoundPoliceImgData" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT ALL
+		<foreach collection="faImgList" item="record" index="i" separator=" ">
+			INTO LFDBA.FOUNDARTICLEIMAGES(FI_IMGCODE,FI_FACODE,FI_NAME, FI_LOC,FI_CATE,FI_COLORCATE) 
+			VALUES(#{record.fiFacode}||<if test="i==0">'S'</if><if test="i==1">'B'</if><if test="i==2">'C'</if>,#{record.fiFacode}, #{record.fiName},#{record.fiLoc},#{record.fiCate},#{record.fiColorCate}) 
+		</foreach>	
+		SELECT 1 FROM DUAL	
+	</insert>
+	<insert id="insLostPoliceDataJAN" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEJAN(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataFEB" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEFEB(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataMAR" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEFEB(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataAPR" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEAPR(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataMAY" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEMAY(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataJUN" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEJUN(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataJUY" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEJUY(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataAUG" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEAUG(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataSEP" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLESEP(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataOCT" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEOCT(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataNOV" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLENOV(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceDataDES" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT INTO LFDBA.LOSTARTICLEDES(LA_MCCODE,LA_UCCODE,LA_CTNUMBER,LA_NAME,LA_PLACE,LA_DATE,LA_STATUS,LA_LOCATION,LA_UNIQUE,LA_MMID,LA_HOUR) 
+		VALUES(#{laMcCode},#{laUcCode},#{laCtNumber},#{laName},#{laPlace},#{laDate},#{laStatus},#{laLocation},#{laUnique},#{laMmId},#{laHour})
+	</insert>
+	<insert id="insLostPoliceImgData" parameterType="icia.js.lostandfound.beans.LostArticleBean">
+		INSERT ALL
+		<foreach collection="laImgList" item="record" index="i" separator=" ">
+			INTO LFDBA.LOSTARTICLEIMAGES(LI_IMGCODE,LI_LACODE, LI_NAME, LI_LOC,LI_CATE,LI_COLORCATE) 
+			VALUES(#{record.liLaCode}||<if test="i==0">'S'</if><if test="i==1">'B'</if><if test="i==2">'C'</if>,#{record.liLaCode}, #{record.liName}, #{record.liLoc},#{record.liCate},#{record.liColorCate}) 
+		</foreach>	
+		SELECT 1 FROM DUAL
+	</insert>
+	 <insert id="insFoundPolicePortalData" parameterType="icia.js.lostandfound.beans.FoundArticleBean">
+		INSERT INTO LFDBA.FOUNDARTICLEPORTAL(FA_UCCODE,FA_CTNUMBER,FA_DEPPLACE,FA_NAME,FA_UNIQUE,FA_MCCODE,FA_DATE,FA_MMID,FA_STATUS,FA_HOUR,FA_COLOR,FA_PLACE)  
+		VALUES(#{faUcCode},#{faCtNumber},#{faDepPlace},#{faName},#{faUnique},#{faMcCode},#{faDate},#{faMmId},#{faStatus},#{faHour},#{faColor},#{faPlace})
+	</insert>
+</mapper>
